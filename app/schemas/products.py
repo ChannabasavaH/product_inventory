@@ -1,20 +1,26 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
+from decimal import Decimal
 
-class Product(BaseModel):
-    id: int
-    name: str
-    description: str
-    price: float
-    quantity: int
+class ProductBase(BaseModel):
+    title: str = Field(max_length=30)
+    description: str = Field(max_length=255)
+    price: Decimal = Field(gt=0, max_digits=10, decimal_places=2)
+    quantity: int = Field(gt=0, le=100)
+
+class ProductCreate(ProductBase):
+    pass
 
 class ProductResponse(BaseModel):
     id: int
-    name: str
+    title: str
     description: str
     price: float
     quantity: int
-    createdAt: datetime
+    created_at: datetime
 
-    class Config:
-        from_attribute: True
+    model_config = ConfigDict(from_attributes=True)
+
+class ProductCreateResponse(BaseModel):
+    message: str
+    product: ProductResponse
