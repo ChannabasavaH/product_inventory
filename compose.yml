@@ -1,0 +1,33 @@
+services:
+  backend:
+    build: .
+    container_name: inventory_backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    
+  postgres:
+    image: postgres:latest
+    container_name: inventory_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Cha010@#3
+      POSTGRES_DB: productinventory
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d productinventory"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  postgres_data:
+    name: inventory_postgres_data

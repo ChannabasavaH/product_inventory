@@ -1,0 +1,17 @@
+.env
+.git
+.gitignore
+
+Dockerfile
+compose.yml
+
+fastapi_tut
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+.pytest_cache
+.mypy_cache
+.coverage
+htmlcov
