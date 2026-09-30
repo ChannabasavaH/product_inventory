@@ -3,6 +3,9 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.schemas.products import ProductCreate, ProductBase, ProductResponse, ProductCreateResponse
 from app.services.products import create_product, get_product, get_product_by_id, update_product, delete_product
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -22,8 +25,14 @@ def create_product_endpoint(product_data: ProductCreate, db: Session =  Depends(
 
 @router.get("", response_model=list[ProductResponse], status_code=status.HTTP_200_OK)
 def get_product_endpoint(db: Session = Depends(get_db)):
+    logger.info(
+        "Fetching Products",
+    )
     try:
         response = get_product(db)
+        logger.info(
+            "Product fetched successfully"
+        )
         return response
     except Exception as e:
         print(e)
@@ -31,13 +40,31 @@ def get_product_endpoint(db: Session = Depends(get_db)):
 
 @router.get("/{id}", response_model=ProductResponse, status_code=status.HTTP_200_OK)
 def get_product_by_id_endpoint(id: int, db: Session = Depends(get_db)):
+    logger.info(
+        "Fetching product",
+        extra={
+            "prodcut_id": id
+        }
+    )
     try:
         response = get_product_by_id(id, db)
         if not response:
+            logger.warning(
+                "Product not found",
+                extra={
+                    "product_id": id
+                }
+            )
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Product not found"
             )
+        logger.info(
+            "Product fetched successfully",
+            extra={
+                "product_id": id
+            }
+        )
         return response
     except Exception as e:
         print(e)
