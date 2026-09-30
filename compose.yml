@@ -6,9 +6,15 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    environment:
+      OTEL_SERVICE_NAME: product-inventory
+      OTEL_EXPORTER_OLTP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
     depends_on:
       postgres:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
     
   postgres:
     image: postgres:latest
@@ -27,7 +33,66 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
+  
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: inventory_otel
+
+    command:
+      - "--config=/etc/otelcol-contrib/otel-collector-config.yml"
+
+    volumes:
+      - ./otel/otel-collector-config.yml:/etc/otelcol-contrib/otel-collector-config.yml
+
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+
+    depends_on:
+      - jaeger
+      - loki
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: inventory_jaeger
+
+    ports:
+      - "16686:16686"
+      - "4317"
+      - "4318"
+
+  loki:
+    image: grafana/loki:latest
+    container_name: inventory_loki
+
+    command:
+      - "-config.file=/etc/loki/loki-config.yml"
+
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml
+      - loki_data:/loki
+
+    ports:
+      - "3100:3100"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: inventory_grafana
+
+    ports:
+      - "3000:3000"
+
+    depends_on:
+      - loki
+      - jaeger
+
+    volumes:
+      - grafana_data:/var/lib/grafana
 
 volumes:
   postgres_data:
     name: inventory_postgres_data
+  loki_data:
+    name: inventory_loki_data
+  grafana_data:
+    name: inventory_grafana_data
